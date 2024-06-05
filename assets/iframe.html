@@ -15,28 +15,36 @@
   <script src="https://static.zdassets.com/zendesk_app_framework_sdk/2.0/zaf_sdk.min.js"></script>
   <script>
     var client = ZAFClient.init();
-    
+
     client.get(['ticketFields', 'ticket.comment.text']).then(data => {
         const gurusupCustomLabels = ['gurusup_status', 'gurusup_body', 'gurusup_output_language'];
-        
+
         const gurusupCustomFields = Object.values(data.ticketFields)
             .filter(field => gurusupCustomLabels.includes(field.label))
             .reduce((acc, field) => {
-              acc[field.label] = field;
-              return acc;
+                acc[field.label] = field;
+                return acc;
             }, {});
-        
+
         client.on('ticket.save', () => {
             client.get(['ticket.comment.text'])
-            .then((data) => {
-                if (data["ticket.comment.text"] != null && data["ticket.comment.text"].trim() !== "") {
-                    client.set("ticket.customField:" + gurusup_fields["gurusup_status"], "send_draft");
-                    client.set("ticket.customField:" + gurusup_fields["gurusup_body"], data["ticket.comment.text"]);
-                    client.set('comment.text', "");
-                }
-            })
-            .then(() => client.invoke("notify", "[Gurusup] Ticket Sent Using GuruSup 🎉"))
+                .then((data) => {
+                    if (data["ticket.comment.text"] != null && data["ticket.comment.text"].trim() !== "") {
+                        return Promise.all([
+                            client.set("ticket.customField:" + gurusupCustomFields["gurusup_status"], "send_draft"),
+                            client.set("ticket.customField:" + gurusupCustomFields["gurusup_body"], data["ticket.comment.text"]),
+                            client.set('comment.text', "")
+                        ]);
+                    }
+                })
+                .then(() => {
+                    return client.invoke("notify", "[Gurusup] Ticket Sent Using GuruSup 🎉");
+                })
+                .catch(error => {
+                    console.error('[Gurusup] Error:', error);
+                });
         });
+
 
         if (gurusupCustomFields['gurusup_status'] && gurusupCustomFields['gurusup_body']) {
             client.on(`ticket.${gurusupCustomFields['gurusup_status'].name}.changed`, () => {
