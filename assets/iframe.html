@@ -47,6 +47,17 @@
 
 
         if (gurusupCustomFields['gurusup_status'] && gurusupCustomFields['gurusup_body']) {
+
+            client.get(`ticket.customField:${gurusupCustomFields['gurusup_body'].name}`)
+                .then(data => {
+                        client.set('ticket.comment.text', '')
+                            .then(() => client.invoke('ticket.editor.insert', data[`ticket.customField:${gurusupCustomFields['gurusup_body'].name}`]))
+                    })
+                    .then(() => client.invoke("notify", "[Gurusup] Ticket response generated"))
+                    .catch(error => {
+                        console.error('[Gurusup] Error:', error);
+                    });
+
             client.on(`ticket.${gurusupCustomFields['gurusup_status'].name}.changed`, () => {
                 client.get(`ticket.customField:${gurusupCustomFields['gurusup_body'].name}`)
                     .then(data => {
