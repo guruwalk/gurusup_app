@@ -1,8 +1,8 @@
 {
   "app": {
-    "name": "Zen Tunes",
-    "short_description": "Play the famous zen tunes in your help desk.",
-    "long_description": "Play the famous zen tunes in your help desk and \n listen to the beats it has to offer.",
+    "name": "GuruSup",
+    "short_description": "Boost customer support productivity by 3X with AI.",
+    "long_description": "GuruSup connects your data with AI to classify content and generate responses with 75% accuracy, handling multiple languages.",
     "installation_instructions": "Simply click install."
   }
 }
