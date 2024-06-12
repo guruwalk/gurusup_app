@@ -30,15 +30,15 @@
         function update_gurusup_fields() {
             return new Promise((resolve) => {
                 client.get(['ticket.comment.text']).then(function(data) {
-                if (data["ticket.comment.text"] != null && data["ticket.comment.text"] != "") {
-                    client.set("ticket.customField:"+gurusupCustomFields['gurusup_status'].name, "send_draft");
-                    client.set("ticket.customField:"+gurusupCustomFields['gurusup_body'].name, data["ticket.comment.text"]);
-                    client.set('comment.text', "");
-                }
-                resolve(true)
-            })
-      });
-    }
+                    if (data["ticket.comment.text"] != null && data["ticket.comment.text"] != "") {
+                        client.set("ticket.customField:"+gurusupCustomFields['gurusup_status'].name, "send_draft");
+                        client.set("ticket.customField:"+gurusupCustomFields['gurusup_body'].name, data["ticket.comment.text"]);
+                        client.set('comment.text', "");
+                    }
+                    resolve(true)
+                })
+            });
+        }
 
         client.on('ticket.save', async function() {
             const result = await update_gurusup_fields();
