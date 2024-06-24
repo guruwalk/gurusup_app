@@ -11,12 +11,13 @@
 </head>
 <body>
   <h2 class="u-semibold u-fs-xl">GuruSup</h2>
-  <button class="c-btn c-btn--primary" onclick="setGurusupBody()">TRANSLATE & SEND</button>
+  <!-- <button class="c-btn c-btn--primary" onclick="setGurusupBody()">TRANSLATE & SEND</button> -->
   <script src="https://static.zdassets.com/zendesk_app_framework_sdk/2.0/zaf_sdk.min.js"></script>
   <script>
     var client = ZAFClient.init();
 
     client.get(['ticketFields', 'ticket.comment.text']).then(data => {
+
         const gurusupCustomLabels = ['gurusup_status', 'gurusup_body', 'gurusup_output_language'];
 
         const gurusupCustomFields = Object.values(data.ticketFields)
@@ -26,10 +27,16 @@
                 return acc;
             }, {});
 
-        
+        if(gurusupCustomFields === '{}') {
+            client.invoke("notify", "[Gurusup] Application not initiated. Contact GuruSup support");
+            return
+        }
+
+
         function update_gurusup_fields() {
             return new Promise((resolve) => {
                 client.get(['ticket.comment.text']).then(function(data) {
+
                     if (data["ticket.comment.text"] != null && data["ticket.comment.text"] != "") {
                         client.set("ticket.customField:"+gurusupCustomFields['gurusup_status'].name, "send_draft");
                         client.set("ticket.customField:"+gurusupCustomFields['gurusup_body'].name, data["ticket.comment.text"]);
@@ -40,10 +47,12 @@
             });
         }
 
-        client.on('ticket.save', async function() {
-            const result = await update_gurusup_fields();
-            console.log(result);
-            client.invoke("notify", "Request successful!");
+        client.on('ticket.save', async function(event) {
+            comment = await client.get(['ticket.comment']) 
+            if(comment['ticket.comment'].type === 'internalNote')
+                return true
+            const result = await update_gurusup_fields(event);
+            client.invoke("notify", "Message Sent by GuruSup!");
             return false;
         });
 
@@ -52,10 +61,9 @@
 
             client.get(`ticket.customField:${gurusupCustomFields['gurusup_body'].name}`)
                 .then(data => {
-                        client.set('ticket.comment.text', '')
+                    client.set('ticket.comment.text', '')
                             .then(() => client.invoke('ticket.editor.insert', data[`ticket.customField:${gurusupCustomFields['gurusup_body'].name}`]))
                     })
-                    .then(() => client.invoke("notify", "[Gurusup] Ticket response generated"))
                     .catch(error => {
                         console.error('[Gurusup] Error:', error);
                     });
@@ -66,7 +74,6 @@
                         client.set('ticket.comment.text', '')
                             .then(() => client.invoke('ticket.editor.insert', data[`ticket.customField:${gurusupCustomFields['gurusup_body'].name}`]))
                     })
-                    .then(() => client.invoke("notify", "[Gurusup] Ticket status changed"))
                     .catch(error => {
                         console.error('[Gurusup] Error:', error);
                     });
